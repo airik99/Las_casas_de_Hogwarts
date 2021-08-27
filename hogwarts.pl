@@ -82,6 +82,11 @@ accion(draco, mazmorras).
 accion(ron, ganarAjedrez).
 accion(hermione, salvarAmigos).
 accion(harry, ganarleAVoldemort).
+accion(luna, salvarAmigos).
+
+accion(hermione, pregunta(dondeSeEncuentraUnBezoar, snape)).
+accion(hermione, pregunta(comoHacerLevitarUnaPluma, flitwick)).
+accion(luna, pregunta(comoHacerLevitarUnaPluma, flitwick)).
 
 lugarProhibido(tercerPiso, 75).
 lugarProhibido(seccionRestringidaDeBiblioteca, 10).
@@ -94,6 +99,10 @@ malaAccion(Accion, Puntaje) :-
 buenaAccion(ganarAjedrez, 50).
 buenaAccion(salvarAmigos, 50).
 buenaAccion(ganarleAVoldemort, 60).
+
+buenaAccion(pregunta(Pregunta, Profesor), PuntajeDefinitivo) :-
+    puntosPorPregunta(Pregunta, Puntaje),
+    calcularPuntaje(Profesor, Puntaje, PuntajeDefinitivo).
 
 esDe(hermione, gryffindor).
 esDe(ron, gryffindor).
@@ -115,5 +124,43 @@ accionRecurrente(Accion) :-
     UnMago \= OtroMago.
 
 % --------------- PUNTO 2 --------------- 
-%Saber cuál es el puntaje total de una casa, que es la suma de los puntos obtenidos por sus miembros.
 
+puntajeTotal(Casa, PuntajeTotal) :-
+    casa(Casa),
+    findall(Puntaje, puntajePorMago(_, Casa, Puntaje), Puntajes),
+    sum_list(Puntajes, PuntajeTotal).
+
+puntajePorMago(Mago, Casa, Puntaje) :-
+    esDe(Mago, Casa),
+    accion(Mago, Accion),
+    puntajePorAccion(Accion, Puntaje).
+
+puntajePorAccion(Accion, Puntaje) :-
+    buenaAccion(Accion, Puntaje).
+
+puntajePorAccion(Accion, Puntaje) :-
+    malaAccion(Accion, UnPuntaje),
+    Puntaje is UnPuntaje * (-1).
+
+% --------------- PUNTO 3 --------------- 
+
+casaGanadora(UnaCasa) :-
+    casa(UnaCasa),
+    forall(puntajeDeDosCasas(UnaCasa, _, PuntajeCasa1, PuntajeCasa2), PuntajeCasa1 > PuntajeCasa2).
+
+puntajeDeDosCasas(UnaCasa, OtraCasa, PuntajeCasa1, PuntajeCasa2) :-
+    casa(OtraCasa),
+    puntajeTotal(UnaCasa, PuntajeCasa1),
+    puntajeTotal(OtraCasa, PuntajeCasa2),
+    UnaCasa \= OtraCasa.
+
+% --------------- PUNTO 4 --------------- 
+
+calcularPuntaje(Profesor, Puntaje, Puntaje) :-
+    Profesor \= snape.
+
+calcularPuntaje(snape, Puntaje, PuntajeDefinitivo) :-
+    PuntajeDefinitivo is Puntaje / 2.
+
+puntosPorPregunta(dondeSeEncuentraUnBezoar, 20).
+puntosPorPregunta(comoHacerLevitarUnaPluma, 25).
